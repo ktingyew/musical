@@ -1,0 +1,11 @@
+
+# Visual Studio
+.vscode/*
+
+# logs
+*.log
+
+# config file (sensitive info)
+config.json
+Configuration/
+src/test.py
