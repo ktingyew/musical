@@ -545,7 +545,7 @@ if __name__ == '__main__':
             page_ls.append(r)
             
             if r.status_code != 200:
-                raise Exception(
+                raise ConnectionError(
                     f"Status Code of {r.status_code} from {r.url}. Aborting.")
         logger.info(
             f"Last.fm: Retrieval of JSON object from last.fm " 
