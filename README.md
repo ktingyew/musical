@@ -1,14 +1,20 @@
 
 
-# README
+# MUSICAL
 
-`report.py` - Python 3 Script Code.
+A program that automatically collates data of my music library and uploads them into BigQuery for subsequent data visualisation.
 
-`daily_script.bat` - Batch Script that is executed recurrently by Windows Task Scheduler. 
+Information collected includes tags of `.mp3` and `.flac` music files, and my personal [last.fm](https://www.last.fm/) scrobbling data.
 
-- Runs `musical.py` with the required source and destination arguments.
 
-`config.json` - Configuration File
+
+`daily_script.bat` - Batch Script that is to be executed recurrently by Windows Task Scheduler. 
+
+- The script runs `musical.py` with the required source and destination arguments
+- To be executed daily, e.g. 10pm every day
+
+`config.json` - Configuration File that provides arguments to `musical.py`. Content as follows:
+
 ```json
 {
   "log_fpath": <filepath of logfile>,
@@ -40,7 +46,7 @@
 
 
 
-## Dependencies 
+## Dependencies (python libraries)
 
 - mutagen
 - pandas
