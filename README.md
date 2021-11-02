@@ -45,3 +45,16 @@
 - mutagen
 - pandas
 
+
+
+
+
+## Data Studio Ideas
+
+1. A new dynamically generated field in report which contains the most recent date each song is scrobbled.
+
+   - Thought it would be interesting to have a ordered list of songs that I have not scrobbled (i.e. listened) for the longest time. Knowing how long I have not listened to some songs would be insightful. 
+
+2. A graph of scrobble count since I started scrobbling.
+
+   
