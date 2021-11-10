@@ -400,6 +400,11 @@ if __name__ == '__main__':
             p=Path(CONFIG['report_out_dir']),
             root=PROJECT_DIR)
 
+        # temp directory (to store intermediate files for debugging)
+        TEMP_DIR = init_dirpath(
+            p=Path(CONFIG['temp_dir']),
+            root=PROJECT_DIR)
+
         # bigquery credentials filepath
         BQ_CRED_FPATH = init_filepath(
             p=Path(CONFIG['bq']['cred_fpath']),
@@ -580,7 +585,13 @@ if __name__ == '__main__':
         new = pd.DataFrame(data=records) \
             .dropna(axis=0, subset=['Datetime']) \
             .reset_index(drop=True) 
-               
+        # store new scrob records to temp directory (debugging)
+        new.to_csv(
+            TEMP_DIR/'new.csv',
+            sep='\t',
+            index=False)
+        logger.info(f"new scrobble records stored in {TEMP_DIR}")
+
         # load the most recent comprehensive scrobble dataset; 
         # the one where we will be adding the new scrobbles   
         fpath = f"{SCROB_DIR}/{CONFIG['latest_scrob_fname']}"  
@@ -613,9 +624,9 @@ if __name__ == '__main__':
             if len(ans_df) == 1: # there is an answer
                 new.at[i, 'Title_c'] = ans_df.values.tolist()[0][2]
                 new.at[i, 'Artist_c'] = ans_df.values.tolist()[0][3]
-            else: # we still populate the field with the currently "wrong" tags
-                new.at[i, 'Title_c'] = title
-                new.at[i, 'Artist_c'] =  artist 
+            else: # we populate the field with easy to find tags
+                new.at[i, 'Title_c'] = "XXxXX"
+                new.at[i, 'Artist_c'] =  "XXxXX" 
 
         # Adjust datetime of scrobbles 8-hours ahead (to SGT)
         dt_formatter = lambda x : (
@@ -635,7 +646,7 @@ if __name__ == '__main__':
         # Find unmapped and log to warning
         # Look at most recent 2000 scrobbles to see of any unmapped. 
         # Why not check everything? Cos waste computation.
-        CHECK_PAST = 2000 
+        CHECK_PAST = 2500 
         for i in range(CHECK_PAST):
             # retrieve artist, title from `out`
             title, artist = out.iloc[i]['Title'], out.iloc[i]['Artist']
@@ -646,7 +657,9 @@ if __name__ == '__main__':
                 & (mapper['Title_s'] == title)
             ] 
             if len(ans_df) != 1:           
-                logger.warning(f"Unmapped scrobble found: {title, artist}")
+                logger.warning(
+                    f"Unmapped scrobble found ({i-1}): " \
+                    + f"{title, artist}")
                         
         # Find scrobbles that have missing/null videos
         def display_col_na(input_df, col_name):
@@ -682,7 +695,13 @@ if __name__ == '__main__':
             logger.warning(
                 f"Discrepancy: In scrobble but not in report: {tup}")
             
-            
+        # TODO Find all "XXxXX" scrobbles and correct them by checking them
+        # against mapper
+        #
+        #
+        #
+
+
         # EXPORT AND UPLOAD SCROBBLES =========================================
         
         # Export to local com
@@ -691,17 +710,21 @@ if __name__ == '__main__':
                     out.iloc[0]['Datetime'], 
                     '%d %b %Y, %H:%M'
                 ).strftime("%Y-%m-%d %H-%M-%S") + \
-                ".json" 
+                ".jsonl" 
         fpath = f"{SCROB_DIR}/{fname}"
-        # save df as json newline delimited
-        out.to_json(fpath, orient='records', lines=True) 
-        logger.info(
-            f"Scrobble: File successfully saved (n={len(out)}): {fpath}")
+        # save df as json newline delimited (.jsonl) with utf-8 encoding
+        with open(fpath, 'w', encoding='utf-8') as fh:
+            out.to_json(fh, force_ascii=False, orient='records', lines=True) 
+            logger.info(
+                f"Scrobble: File successfully saved (n={len(out)}): {fpath}")
         
         # Update latest_scrob_fpath.yaml to reflect the filename of the latest
         # scrobble file
         CONFIG['latest_scrob_fname'] = fname
-        logger.debug(f"Configuration updated for latest scrobbles filename")
+        with open(ARGS.config, 'w') as fp:
+            json.dump(CONFIG, fp, indent=4)
+            logger.debug(f"Configuration updated for latest scrobbles " \
+                + "filename")
         
         # Prep references and schema then upload to bq
         pj_id = CONFIG['bq']['pj_id']

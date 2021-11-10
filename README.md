@@ -19,6 +19,7 @@ Information collected includes tags of `.mp3` and `.flac` music files, and my pe
 {
   "log_fpath": <filepath of logfile>,
   "log_verbose": <boolean>,
+  "temp_dir": <directory to store temporary files useful for debugging>,
   "music_dir": <directory to music library>,
   "report_out_dir": <directory to save report output>,
   "bq": {
@@ -35,7 +36,7 @@ Information collected includes tags of `.mp3` and `.flac` music files, and my pe
     "api_key": <lastfm api key>
   },
   "latest_scrob_fname": <filename of latest scrobble - updated every time program is ran; no need to edit manually>,
-  "scrobble_out_dir": <directory to save processed scrobbles>,
+  "scrobble_out_dir": <directory to save processed scrobbles in jsonl format>,
   "mapper_fpath": <filepath to mapper>,
   "pd_schema_fpath": <filepath to pandas schema in YAML>,
   "unwanted_scrob_fpath": <filepath to unwanted scrobbles>
