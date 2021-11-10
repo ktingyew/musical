@@ -51,17 +51,22 @@ Information collected includes tags of `.mp3` and `.flac` music files, and my pe
 
 - mutagen
 - pandas
-
+- tqdm
+- google.cloud
 
 
 
 
 ## Data Studio Ideas
 
-1. A new dynamically generated field in report which contains the most recent date each song is scrobbled.
+1. ~~A new dynamically generated field in report which contains the most recent date each song is scrobbled.~~
 
-   - Thought it would be interesting to have a ordered list of songs that I have not scrobbled (i.e. listened) for the longest time. Knowing how long I have not listened to some songs would be insightful. 
+   - ~~Thought it would be interesting to have a ordered list of songs that I have not scrobbled (i.e. listened) for the longest time. Knowing how long I have not listened to some songs would be insightful.~~
 
-2. A graph of scrobble count since I started scrobbling.
+2. ~~A graph of scrobble count since I started scrobbling.~~
+
+3. Gender-rating breakdown
+
+4. Average rating of the most populous artists
 
    
