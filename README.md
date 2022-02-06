@@ -1,6 +1,19 @@
 
-
 # MUSICAL
+
+## Crucial Note
+
+06/02/2022
+
+This repo is rendered deprecated and it won't be updated. 
+
+Project is redone using Docker and can be found [here](https://github.com/ktingyew/tabulate-music).
+
+
+<hr> <br>
+
+## Introduction
+
 
 A program that automatically collates data of my music library and uploads them into BigQuery for subsequent data visualisation.
 
