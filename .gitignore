@@ -7,8 +7,11 @@
 # logs
 *.log
 
+# Jupyter notebooks
+manual_map_resolver/
+musicbee_lastfm_log/
+
 # config file (sensitive info)
 config.json
 Configuration/
-src/test.py
 temp/

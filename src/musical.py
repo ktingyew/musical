@@ -50,12 +50,24 @@ def init_dirpath(
     Raises:
         FileNotFoundError: If p is not a valid path to a directory
     """
-    if not p.is_dir():
-        raise FileNotFoundError(f"{str(p)} is not a directory")
+    # if not p.is_dir():
+    #     raise FileNotFoundError(f"{p} is not a directory")
+    # if p.is_absolute():
+    #     return p
+    # else:
+    #     return root/p
+
     if p.is_absolute():
-        return p
-    else:
-        return root/p
+        if p.is_dir():
+            return p
+        else:
+            raise FileNotFoundError(f"{p} is not a directory")
+    else: # is relative
+        if (root/p).is_dir():
+            return root/p
+        else:
+            raise FileNotFoundError(f"{p} is not a directory")
+
 
 def init_filepath(
     p: pathlib.Path,
@@ -334,6 +346,7 @@ if __name__ == '__main__':
     """
     """
 
+    # As this source code resides in a 'src' dir
     PROJECT_DIR = Path(os.path.dirname(__file__)).parent
 
     # ========== ARG PARSING ==========
@@ -439,7 +452,8 @@ if __name__ == '__main__':
     try:
 
         records = []
-        for f in tqdm(os.listdir(MUSIC_DIR)):
+        music_file_ls = tqdm(os.listdir(MUSIC_DIR))
+        for f in music_file_ls:
             if f.endswith('.flac'):
                 records.append(flac_extractor(MUSIC_DIR/f))
             elif f.endswith('.mp3'):
@@ -514,7 +528,7 @@ if __name__ == '__main__':
         # initialise table with schema using its (tbl) reference
         tbl = bq.Table(tbl_ref, schema=schema) 
         client.delete_table(tbl, not_found_ok=True)
-        # set optionmal parameter exists_ok=True to ignore error of table 
+        # set optional parameter exists_ok=True to ignore error of table 
         # already existing
         client.create_table(tbl) 
         
@@ -523,8 +537,8 @@ if __name__ == '__main__':
         df['DateAdded'] = pd.to_datetime(df['DateAdded']) 
         client.load_table_from_dataframe(df, tbl_ref)
         logger.info(
-            f"BigQuery: Report uploaded successfully: "
-            + "{pj_id}-{ds_id}-{tbl_id}"
+            "BigQuery: Report uploaded successfully: "
+            + f"{pj_id}-{ds_id}-{tbl_id}"
         )
         
         
@@ -644,9 +658,10 @@ if __name__ == '__main__':
         # IDENTIFY MISTAKES IN SCROBBLES AND REPORT ===========================
         
         # Find unmapped and log to warning
-        # Look at most recent 2000 scrobbles to see of any unmapped. 
+        # Look at most recent 2500 scrobbles (or so) to see of any unmapped. 
         # Why not check everything? Cos waste computation.
         CHECK_PAST = 2500 
+        mistake_ls = [] # list to store mistake 
         for i in range(CHECK_PAST):
             # retrieve artist, title from `out`
             title, artist = out.iloc[i]['Title'], out.iloc[i]['Artist']
@@ -655,11 +670,29 @@ if __name__ == '__main__':
             ans_df = mapper[
                 (mapper['Artist_s'] == artist) 
                 & (mapper['Title_s'] == title)
-            ] 
-            if len(ans_df) != 1:           
+            ]
+
+            if len(ans_df) == 0: 
+                mistake_ls.append((title, artist, 0)) # '0' for unmapped    
                 logger.warning(
-                    f"Unmapped scrobble found ({i-1}): " \
+                    f"Unmapped scrobble found (No. {i+1}): " \
                     + f"{title, artist}")
+            elif len(ans_df) >= 2: 
+                mistake_ls.append((title, artist, 2)) # '2' for multiple maps   
+                logger.warning(
+                    f"Scrobble mapped to more than 1 output (No. {i+1}): " \
+                    + f"{title, artist}")
+
+        # Create .tsv file and store it in temp folder
+        mistake_df = pd.DataFrame(
+            data=mistake_ls,
+            columns=['Title', 'Artist', 'Code'])
+        mistake_df.to_csv(
+            TEMP_DIR / 'mistaken_maps.csv',
+            sep='\t',
+            index=False
+        )
+        logger.info(f"mistake maps stored in {TEMP_DIR}")
                         
         # Find scrobbles that have missing/null videos
         def display_col_na(input_df, col_name):
@@ -668,7 +701,7 @@ if __name__ == '__main__':
             return df[mask]
 
         for col in ['Title_c', 'Artist_c', 'Datetime', 'Datetime_n']:
-            tmp = display_col_na(out, 'Title_c').values.tolist()
+            tmp = display_col_na(out, col).values.tolist()
             if len(tmp) != 0:
                 for entry in tmp:
                     logger.warning(
@@ -694,21 +727,14 @@ if __name__ == '__main__':
         for tup in l2:
             logger.warning(
                 f"Discrepancy: In scrobble but not in report: {tup}")
-            
-        # TODO Find all "XXxXX" scrobbles and correct them by checking them
-        # against mapper
-        #
-        #
-        #
-
 
         # EXPORT AND UPLOAD SCROBBLES =========================================
         
         # Export to local com
         fname = "scrobbles " + \
                 datetime.strptime(
-                    out.iloc[0]['Datetime'], 
-                    '%d %b %Y, %H:%M'
+                    out.iloc[0]['Datetime_n'], 
+                    "%Y-%m-%d %H:%M:%S"
                 ).strftime("%Y-%m-%d %H-%M-%S") + \
                 ".jsonl" 
         fpath = f"{SCROB_DIR}/{fname}"
@@ -754,8 +780,8 @@ if __name__ == '__main__':
         out['Datetime_n'] = pd.to_datetime(out['Datetime_n']) 
         client.load_table_from_dataframe(out, tbl_ref)
         logger.info(
-            f"BigQuery: Scrobbles uploaded successfully: " \
-            + "{pj_id}-{ds_id}-{tbl_id}"
+            "BigQuery: Scrobbles uploaded successfully: " \
+            + f"{pj_id}-{ds_id}-{tbl_id}"
         )
 
     except Exception:
